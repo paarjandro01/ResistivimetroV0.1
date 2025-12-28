@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resistivímetro - Tabla de Datos y Exportación</title>
+    <style>
+        :root {
+            --primary: #1a237e;
+            --secondary: #311b92;
+            --accent: #00e676;
+            --danger: #ff4444;
+            --warning: #ff9800;
+            --light: #f5f5f5;
+            --dark: #121212;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header {
+            background: linear-gradient(135deg, #0d47a1 0%, var(--primary) 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-left h1 {
+            font-size: 2.2em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-left p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .status-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 12px 20px;
+            text-align: center;
+            min-width: 150px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+            margin: 0 auto 8px;
+        }
+        
+        .status-indicator.connected {
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+            animation: pulse 2s infinite;
+        }
+        
+        .led-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #666;
+            box-shadow: 0 0 10px #666;
+            margin: 0 auto 8px;
+        }
+        
+        .led-indicator.on {
+            background: #2196f3;
+            box-shadow: 0 0 20px #2196f3;
+            animation: pulse-blue 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 10px #2196f3; }
+            50% { box-shadow: 0 0 25px #2196f3; }
+            100% { box-shadow: 0 0 10px #2196f3; }
+        }
+        
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .panel h2 {
+            color: #bb86fc;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+        }
+        
+        .btn-connect {
+            background: linear-gradient(135deg, #00c853 0%, #64dd17 100%);
+        }
+        
+        .btn-disconnect {
+            background: linear-gradient(135deg, #ff3d00 0%, #ff9100 100%);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2979ff 0%, #00b0ff 100%);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #7b1fa2 0%, #ba68c8 100%);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800 0%, #ffc400 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #00bcd4 0%, #4dd0e1 100%);
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .data-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .data-label {
+            font-size: 0.85em;
+            color: #bbbbbb;
+            margin-bottom: 5px;
+        }
+        
+        .data-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .distance-control {
+            background: rgba(255, 152, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        
+        .distance-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #ff9800;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+        
+        /* Estilos para la tabla */
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        
+        thead {
+            background: rgba(0, 150, 136, 0.3);
+            position: sticky;
+            top: 0;
+        }
+        
+        th {
+            padding: 15px 12px;
+            text-align: left;
+            color: #80deea;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'Courier New', monospace;
+        }
+        
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #bbbbbb;
+        }
+        
+        .stat-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Estilos para el log */
+        .log-container {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            color: #00e676;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            border-radius: 10px;
+            height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 0.85em;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #00bcd4;
+        }
+        
+        .clear-log {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Modal para exportación */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--dark);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .export-option {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .export-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .export-option h4 {
+            color: #bb86fc;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .export-option p {
+            color: #bbbbbb;
+            font-size: 0.9em;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+            
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .status-container {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+                font-size: 0.85em;
+            }
+        }
+        
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1><i class="fas fa-wave-square"></i> RESISTIVÍMETRO BLE</h1>
+                <p>Tabla de datos y exportación a Excel/CSV</p>
+            </div>
+            
+            <div class="status-container">
+                <div class="status-card">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <div id="statusText">Desconectado</div>
+                </div>
+                
+                <div class="status-card">
+                    <div class="led-indicator" id="ledIndicator"></div>
+                    <div>LED XIAO</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2><i class="fas fa-bluetooth-b"></i> Conexión y Control</h2>
+                <div class="controls">
+                    <div class="button-group">
+                        <button id="connectBtn" class="btn-connect">
+                            <i class="fas fa-search"></i> Conectar BLE
+                        </button>
+                        <button id="disconnectBtn" class="btn-disconnect" disabled>
+                            <i class="fas fa-times"></i> Desconectar
+                        </button>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="getDataBtn" class="btn-primary" disabled>
+                            <i class="fas fa-sync-alt"></i> Actualizar Datos
+                        </button>
+                        <button id="clearTableBtn" class="btn-warning">
+                            <i class="fas fa-trash"></i> Limpiar Tabla
+                        </button>
+                    </div>
+                    
+                    <div class="distance-control">
+                        <div class="data-label">Distancia entre electrodos (A)</div>
+                        <div class="distance-value" id="distanceValue">1.0 m</div>
+                        <div class="button-group">
+                            <button id="decreaseBtn" class="btn-warning" disabled>
+                                <i class="fas fa-minus"></i> -
+                            </button>
+                            <button id="increaseBtn" class="btn-warning" disabled>
+                                <i class="fas fa-plus"></i> +
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Resistividad (ρ)</div>
+                            <div class="data-value" id="rhoValue">-- Ω·m</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Voltaje (Vin)</div>
+                            <div class="data-value" id="vinValue">-- V</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Resistencia (R)</div>
+                            <div class="data-value" id="rValue">-- Ω</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Corriente (I)</div>
+                            <div class="data-value" id="iValue">-- A</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Potencia (P)</div>
+                            <div class="data-value" id="pValue">-- W</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Medición #</div>
+                            <div class="data-value" id="medicionCount">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="table-actions">
+                    <h2><i class="fas fa-table"></i> Tabla de Datos</h2>
+                    <div class="stats">
+                        <div class="stat-item" id="rowCount">Filas: 0</div>
+                        <div class="stat-item" id="timeElapsed">Tiempo: 0s</div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="exportBtn" class="btn-success">
+                        <i class="fas fa-file-export"></i> Exportar Datos
+                    </button>
+                    <button id="copyTableBtn" class="btn-secondary">
+                        <i class="fas fa-copy"></i> Copiar Tabla
+                    </button>
+                    <button id="autoRecordBtn" class="btn-primary">
+                        <i class="fas fa-record-vinyl"></i> Auto-Registro
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tiempo (ms)</th>
+                                <th>Vin (V)</th>
+                                <th>I (A)</th>
+                                <th>R (Ω)</th>
+                                <th>ρ (Ω·m)</th>
+                                <th>P (W)</th>
+                                <th>A (m)</th>
+                                <th>Fecha/Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Los datos se insertarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="panel log-container">
+                <div class="log-header">
+                    <h2><i class="fas fa-terminal"></i> Consola BLE</h2>
+                    <div>
+                        <button class="clear-log" onclick="clearLog()">
+                            <i class="fas fa-broom"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="log" id="logContent">
+Sistema de registro de datos del resistivímetro
+================================================
+Instrucciones:
+1. Conectar dispositivo BLE
+2. Los datos se registrarán automáticamente en la tabla
+3. Usa "Exportar Datos" para guardar en Excel/CSV
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Resistivímetro XIAO BLE | Sistema de registro y exportación de datos | © 2024</p>
+        </footer>
+    </div>
+
+    <!-- Modal para exportación -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-export"></i> Exportar Datos</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="export-options">
+                <div class="export-option" onclick="exportToCSV()">
+                    <h4><i class="fas fa-file-csv"></i> Exportar a CSV</h4>
+                    <p>Guarda los datos en formato CSV compatible con Excel, Google Sheets, etc.</p>
+                </div>
+                
+                <div class="export-option" onclick="exportToExcel()">
+                    <h4><i class="fas fa-file-excel"></i> Exportar a Excel</h4>
+                    <p>Descarga un archivo Excel (.xlsx) con todos los datos y formato aplicado</p>
+                </div>
+                
+                <div class="export-option" onclick="copyAsCSV()">
+                    <h4><i class="fas fa-copy"></i> Copiar como CSV</h4>
+                    <p>Copia los datos en formato CSV al portapapeles para pegarlos en Excel</p>
+                </div>
+                
+                <div class="export-option" onclick="exportToJSON()">
+                    <h4><i class="fas fa-file-code"></i> Exportar a JSON</h4>
+                    <p>Guarda los datos en formato JSON para análisis posterior</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // UUIDs BLE
+        const SERVICE_UUID = '19b10010-e8f2-537e-4f6c-d104768a1214';
+        const DATOS_UUID = '19b10011-e8f2-537e-4f6c-d104768a1214';
+        const COMANDOS_UUID = '19b10012-e8f2-537e-4f6c-d104768a1214';
+        
+        // Variables globales
+        let bleDevice = null;
+        let datosCharacteristic = null;
+        let comandosCharacteristic = null;
+        let isConnected = false;
+        let dataTable = [];
+        let startTime = Date.now();
+        let autoRecord = false;
+        let recordingInterval = null;
+        
+        // Elementos DOM
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const getDataBtn = document.getElementById('getDataBtn');
+        const increaseBtn = document.getElementById('increaseBtn');
+        const decreaseBtn = document.getElementById('decreaseBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const copyTableBtn = document.getElementById('copyTableBtn');
+        const clearTableBtn = document.getElementById('clearTableBtn');
+        const autoRecordBtn = document.getElementById('autoRecordBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const ledIndicator = document.getElementById('ledIndicator');
+        const statusText = document.getElementById('statusText');
+        const logContent = document.getElementById('logContent');
+        const tableBody = document.getElementById('tableBody');
+        const rowCount = document.getElementById('rowCount');
+        const timeElapsed = document.getElementById('timeElapsed');
+        
+        // Elementos de datos en tiempo real
+        const distanceValue = document.getElementById('distanceValue');
+        const rhoValue = document.getElementById('rhoValue');
+        const vinValue = document.getElementById('vinValue');
+        const rValue = document.getElementById('rValue');
+        const iValue = document.getElementById('iValue');
+        const pValue = document.getElementById('pValue');
+        const medicionCount = document.getElementById('medicionCount');
+        
+        // Modal
+        const exportModal = document.getElementById('exportModal');
+        
+        // Función para registrar mensajes en la consola
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `[${timestamp}] ${message}\n`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+        
+        function clearLog() {
+            logContent.innerHTML = '';
+            log('Consola limpiada');
+        }
+        
+        // Actualizar estado de conexión
+        function updateStatus(connected) {
+            isConnected = connected;
+            statusIndicator.classList.toggle('connected', connected);
+            ledIndicator.classList.toggle('on', connected);
+            statusText.textContent = connected ? 'Conectado' : 'Desconectado';
+            
+            connectBtn.disabled = connected;
+            disconnectBtn.disabled = !connected;
+            getDataBtn.disabled = !connected;
+            increaseBtn.disabled = !connected;
+            decreaseBtn.disabled = !connected;
+            
+            if (connected) {
+                log('BLE conectado. Recibiendo datos...');
+                // Iniciar registro automático
+                startAutoRecording();
+            } else {
+                log('BLE desconectado');
+                stopAutoRecording();
+            }
+        }
+        
+        // Conectar BLE
+        async function connectBLE() {
+            try {
+                log('Buscando dispositivo BLE...');
+                
+                if (!navigator.bluetooth) {
+                    throw new Error('Web Bluetooth no está disponible en este navegador');
+                }
+                
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: "Resistivimetro-XIAO" }],
+                    optionalServices: [SERVICE_UUID]
+                });
+                
+                log(`Dispositivo encontrado: ${bleDevice.name}`);
+                log('Conectando...');
+                
+                const server = await bleDevice.gatt.connect();
+                log('Servidor GATT conectado');
+                
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                log('Servicio encontrado');
+                
+                const characteristics = await service.getCharacteristics();
+                
+                for (const characteristic of characteristics) {
+                    if (characteristic.uuid === DATOS_UUID) {
+                        datosCharacteristic = characteristic;
+                        await datosCharacteristic.startNotifications();
+                        datosCharacteristic.addEventListener('characteristicvaluechanged', handleData);
+                        log('Suscripción a datos activada');
+                    } else if (characteristic.uuid === COMANDOS_UUID) {
+                        comandosCharacteristic = characteristic;
+                        log('Característica de comandos lista');
+                    }
+                }
+                
+                updateStatus(true);
+                
+            } catch (error) {
+                log(`Error: ${error.message}`);
+                updateStatus(false);
+            }
+        }
+        
+        function onDisconnected() {
+            log('Dispositivo desconectado');
+            updateStatus(false);
+            bleDevice = null;
+            datosCharacteristic = null;
+            comandosCharacteristic = null;
+        }
+        
+        // Procesar datos recibidos
+        function handleData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder('utf-8');
+            const message = decoder.decode(value);
+            
+            log(`← ${message}`);
+            processReceivedData(message);
+        }
+        
+        function processReceivedData(data) {
+            // Extraer datos del formato: ID:1,T:1234,Vin:12.3456,I:0.1234,R:100.12,ρ:628.32,P:1.5234,A:1.0
+            const parts = data.split(',');
+            const dataObj = {};
+            
+            parts.forEach(part => {
+                const [key, value] = part.split(':');
+                if (key && value !== undefined) {
+                    dataObj[key] = value;
+                }
+            });
+            
+            // Actualizar datos en tiempo real
+            if (dataObj.Vin) {
+                vinValue.textContent = `${parseFloat(dataObj.Vin).toFixed(3)} V`;
+                iValue.textContent = `${parseFloat(dataObj.I).toFixed(4)} A`;
+                rValue.textContent = `${parseFloat(dataObj.R).toFixed(2)} Ω`;
+                rhoValue.textContent = `${parseFloat(dataObj.ρ).toFixed(2)} Ω·m`;
+                pValue.textContent = `${parseFloat(dataObj.P).toFixed(4)} W`;
+                distanceValue.textContent = `${parseFloat(dataObj.A)} m`;
+                medicionCount.textContent = dataObj.ID || '0';
+            }
+            
+            // Agregar a la tabla si tenemos todos los datos necesarios
+            if (dataObj.ID && dataObj.T && dataObj.Vin && dataObj.A) {
+                addToTable({
+                    id: dataObj.ID,
+                    timestamp: parseInt(dataObj.T),
+                    vin: parseFloat(dataObj.Vin),
+                    current: parseFloat(dataObj.I),
+                    resistance: parseFloat(dataObj.R),
+                    resistivity: parseFloat(dataObj.ρ),
+                    power: parseFloat(dataObj.P),
+                    distance: parseFloat(dataObj.A),
+                    dateTime: new Date().toLocaleString()
+                });
+            }
+            
+            // Procesar mensajes de distancia
+            if (data.includes('Distancia A =')) {
+                const match = data.match(/Distancia A = ([\d.]+) m/);
+                if (match) {
+                    distanceValue.textContent = `${match[1]} m`;
+                }
+            }
+        }
+        
+        // Enviar comando BLE
+        async function sendCommand(command) {
+            if (!isConnected || !comandosCharacteristic) {
+                log('Error: No hay conexión BLE');
+                return;
+            }
+            
+            try {
+                const encoder = new TextEncoder('utf-8');
+                const data = encoder.encode(command);
+                await comandosCharacteristic.writeValue(data);
+                log(`→ Enviado: "${command}"`);
+            } catch (error) {
+                log(`Error enviando comando: ${error.message}`);
+            }
+        }
+        
+        // Funciones para la tabla de datos
+        function addToTable(data) {
+            // Agregar al array de datos
+            dataTable.push(data);
+            
+            // Crear fila de tabla
+            const row = document.createElement('tr');
+            
+            // Aplicar estilo alternado
+            if (dataTable.length % 2 === 0) {
+                row.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+            }
+            
+            row.innerHTML = `
+                <td>${data.id}</td>
+                <td>${data.timestamp}</td>
+                <td>${data.vin.toFixed(4)}</td>
+                <td>${data.current.toFixed(4)}</td>
+                <td>${data.resistance.toFixed(2)}</td>
+                <td>${data.resistivity.toFixed(2)}</td>
+                <td>${data.power.toFixed(4)}</td>
+                <td>${data.distance}</td>
+                <td>${data.dateTime}</td>
+            `;
+            
+            tableBody.appendChild(row);
+            
+            // Actualizar estadísticas
+            updateStats();
+            
+            // Auto-scroll
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function updateStats() {
+            rowCount.textContent = `Filas: ${dataTable.length}`;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            timeElapsed.textContent = `Tiempo: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function clearTable() {
+            if (dataTable.length === 0) return;
+            
+            if (confirm(`¿Estás seguro de que quieres eliminar ${dataTable.length} registros?`)) {
+                dataTable = [];
+                tableBody.innerHTML = '';
+                startTime = Date.now();
+                updateStats();
+                log('Tabla de datos limpiada');
+            }
+        }
+        
+        // Funciones de exportación
+        function openExportModal() {
+            exportModal.style.display = 'flex';
+        }
+        
+        function closeModal() {
+            exportModal.style.display = 'none';
+        }
+        
+        function exportToCSV() {
+            if (dataTable.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            // Crear encabezados CSV
+            const headers = ['ID', 'Tiempo (ms)', 'Vin (V)', 'I (A)', 'R (Ω)', 'ρ (Ω·m)', 'P (W)', 'A (m)', 'Fecha/Hora'];
+            
+            // Crear filas CSV
+            const rows = dataTable.map(row => [
+                row.id,
+                row.timestamp,
+                row.vin.toFixed(4),
+                row.current.toFixed(4),
+                row.resistance.toFixed(2),
+                row.resistivity.toFixed(2),
+                row.power.toFixed(4),
+                row.distance,
+                row.dateTime
+            ]);
+            
+            // Combinar encabezados y filas
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ].join('\n');
+            
+            // Crear y descargar archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `resistivimetro_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            log(`CSV exportado: ${dataTable.length} registros`);
+            closeModal();
+        }
+        
+        function exportToExcel() {
+            if (dataTable.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            // Crear contenido HTML para Excel
+            let html = `
+                <html xmlns:x="urn:schemas-microsoft-com:office:excel">
+                <head>
+                    <meta charset="UTF-8">
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <x:ExcelWorkbook>
+                            <x:ExcelWorksheets>
+                                <x:ExcelWorksheet>
+                                    <x:Name>Datos Resistivímetro</x:Name>
+                                    <x:WorksheetOptions>
+                                        <x:DisplayGridlines/>
+                                    </x:WorksheetOptions>
+                                </x:ExcelWorksheet>
+                            </x:ExcelWorksheets>
+                        </x:ExcelWorkbook>
+                    </xml>
+                    <![endif]-->
+                    <style>
+                        table { border-collapse: collapse; width: 100%; }
+                        th { background: #4CAF50; color: white; font-weight: bold; padding: 8px; }
+                        td { border: 1px solid #ddd; padding: 8px; }
+                        tr:nth-child(even) { background: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Datos del Resistivímetro</h1>
+                    <p>Exportado: ${new Date().toLocaleString()}</p>
+                    <p>Total de registros: ${dataTable.length}</p>
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tiempo (ms)</th>
+                            <th>Vin (V)</th>
+                            <th>I (A)</th>
+                            <th>R (Ω)</th>
+                            <th>ρ (Ω·m)</th>
+                            <th>P (W)</th>
+                            <th>A (m)</th>
+                            <th>Fecha/Hora</th>
+                        </tr>
+            `;
+            
+            // Agregar filas
+            dataTable.forEach(row => {
+                html += `
+                    <tr>
+                        <td>${row.id}</td>
+                        <td>${row.timestamp}</td>
+                        <td>${row.vin.toFixed(4)}</td>
+                        <td>${row.current.toFixed(4)}</td>
+                        <td>${row.resistance.toFixed(2)}</td>
+                        <td>${row.resistivity.toFixed(2)}</td>
+                        <td>${row.power.toFixed(4)}</td>
+                        <td>${row.distance}</td>
+                        <td>${row.dateTime}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </table>
+                </body>
+                </html>
+            `;
+            
+            // Crear y descargar archivo
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `resistivimetro_${new Date().toISOString().slice(0, 10)}.xls`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            log(`Excel exportado: ${dataTable.length} registros`);
+            closeModal();
+        }
+        
+        function copyAsCSV() {
+            if (dataTable.length === 0) {
+                alert('No hay datos para copiar');
+                return;
+            }
+            
+            const headers = ['ID', 'Tiempo (ms)', 'Vin (V)', 'I (A)', 'R (Ω)', 'ρ (Ω·m)', 'P (W)', 'A (m)', 'Fecha/Hora'];
+            const rows = dataTable.map(row => [
+                row.id,
+                row.timestamp,
+                row.vin.toFixed(4),
+                row.current.toFixed(4),
+                row.resistance.toFixed(2),
+                row.resistivity.toFixed(2),
+                row.power.toFixed(4),
+                row.distance,
+                row.dateTime
+            ]);
+            
+            const csvContent = [
+                headers.join('\t'),
+                ...rows.map(row => row.join('\t'))
+            ].join('\n');
+            
+            navigator.clipboard.writeText(csvContent)
+                .then(() => {
+                    alert('Datos copiados al portapapeles en formato CSV. Puedes pegarlos directamente en Excel.');
+                    log('Datos copiados al portapapeles');
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                    alert('Error al copiar al portapapeles');
+                });
+            
+            closeModal();
+        }
+        
+        function exportToJSON() {
+            if (dataTable.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const jsonData = {
+                metadata: {
+                    exportDate: new Date().toISOString(),
+                    totalRecords: dataTable.length,
+                    device: 'Resistivimetro-XIAO'
+                },
+                data: dataTable
+            };
+            
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `resistivimetro_${new Date().toISOString().slice(0, 10)}.json`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            log(`JSON exportado: ${dataTable.length} registros`);
+            closeModal();
+        }
+        
+        function copyTable() {
+            if (dataTable.length === 0) {
+                alert('No hay datos en la tabla');
+                return;
+            }
+            
+            // Crear tabla HTML para copiar
+            let tableHtml = '<table>';
+            tableHtml += '<tr><th>ID</th><th>Tiempo (ms)</th><th>Vin (V)</th><th>I (A)</th><th>R (Ω)</th><th>ρ (Ω·m)</th><th>P (W)</th><th>A (m)</th><th>Fecha/Hora</th></tr>';
+            
+            dataTable.forEach(row => {
+                tableHtml += `<tr>
+                    <td>${row.id}</td>
+                    <td>${row.timestamp}</td>
+                    <td>${row.vin.toFixed(4)}</td>
+                    <td>${row.current.toFixed(4)}</td>
+                    <td>${row.resistance.toFixed(2)}</td>
+                    <td>${row.resistivity.toFixed(2)}</td>
+                    <td>${row.power.toFixed(4)}</td>
+                    <td>${row.distance}</td>
+                    <td>${row.dateTime}</td>
+                </tr>`;
+            });
+            
+            tableHtml += '</table>';
+            
+            // Usar Clipboard API si está disponible
+            if (navigator.clipboard && window.ClipboardItem) {
+                const blob = new Blob([tableHtml], { type: 'text/html' });
+                const clipboardItem = new ClipboardItem({ 'text/html': blob });
+                
+                navigator.clipboard.write([clipboardItem])
+                    .then(() => {
+                        alert('Tabla copiada al portapapeles');
+                        log('Tabla copiada al portapapeles');
+                    })
+                    .catch(err => {
+                        console.error('Error al copiar: ', err);
+                        fallbackCopy(tableHtml);
+                    });
+            } else {
+                fallbackCopy(tableHtml);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert('Tabla copiada al portapapeles (método alternativo)');
+                log('Tabla copiada al portapapeles');
+            } catch (err) {
+                console.error('Error al copiar: ', err);
+                alert('Error al copiar la tabla');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Funciones de registro automático
+        function toggleAutoRecording() {
+            autoRecord = !autoRecord;
+            
+            if (autoRecord) {
+                startAutoRecording();
+                autoRecordBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Registro';
+                autoRecordBtn.classList.remove('btn-primary');
+                autoRecordBtn.classList.add('btn-disconnect');
+                log('Registro automático ACTIVADO');
+            } else {
+                stopAutoRecording();
+                autoRecordBtn.innerHTML = '<i class="fas fa-record-vinyl"></i> Auto-Registro';
+                autoRecordBtn.classList.remove('btn-disconnect');
+                autoRecordBtn.classList.add('btn-primary');
+                log('Registro automático DESACTIVADO');
+            }
+        }
+        
+        function startAutoRecording() {
+            if (recordingInterval) clearInterval(recordingInterval);
+            
+            // Solicitar datos automáticamente cada 3 segundos
+            recordingInterval = setInterval(() => {
+                if (isConnected) {
+                    sendCommand('?');
+                }
+            }, 3000);
+        }
+        
+        function stopAutoRecording() {
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+            }
+        }
+        
+        // Event Listeners
+        connectBtn.addEventListener('click', connectBLE);
+        disconnectBtn.addEventListener('click', () => {
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+            }
+            updateStatus(false);
+        });
+        
+        getDataBtn.addEventListener('click', () => sendCommand('?'));
+        increaseBtn.addEventListener('click', () => sendCommand('+'));
+        decreaseBtn.addEventListener('click', () => sendCommand('-'));
+        exportBtn.addEventListener('click', openExportModal);
+        copyTableBtn.addEventListener('click', copyTable);
+        clearTableBtn.addEventListener('click', clearTable);
+        autoRecordBtn.addEventListener('click', toggleAutoRecording);
+        
+        // Cerrar modal al hacer clic fuera
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                closeModal();
+            }
+        });
+        
+        // Teclas rápidas
+        document.addEventListener('keydown', (e) => {
+            if (!isConnected) return;
+            
+            switch(e.key) {
+                case '+':
+                    sendCommand('+');
+                    break;
+                case '-':
+                    sendCommand('-');
+                    break;
+                case '?':
+                    sendCommand('?');
+                    break;
+                case 'Escape':
+                    closeModal();
+                    break;
+            }
+        });
+        
+        // Inicialización
+        log('Sistema de registro de datos iniciado');
+        log('Conecta el dispositivo BLE para comenzar');
+        
+        // Actualizar tiempo transcurrido cada segundo
+        setInterval(updateStats, 1000);
+    </script>
+</body>
+</html>
